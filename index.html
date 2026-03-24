@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Investment Calculator</title>
+    <meta name="theme-color" content="#f7f0e8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero-card">
+        <div class="hero-top">
+          <img src="./logo.jpg" alt="Investment Calculator logo" class="app-logo" />
+          <div>
+            <div class="eyebrow" id="eyebrowText">Telegram Mini App</div>
+            <h1 id="appTitle">Investment Calculator</h1>
+            <p id="appSubtitle">Калькулятор каскадных реинвестиций с управлением циклами и дополнительными вложениями.</p>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="chip active" data-lang="ru">RU</button>
+          <button class="chip" data-lang="en">EN</button>
+          <button class="chip" data-lang="uz">UZ</button>
+        </div>
+      </header>
+
+      <section class="grid-two">
+        <div class="card">
+          <div class="card-header">
+            <h2 id="inputsTitle">Параметры</h2>
+            <span class="badge" id="badgeLive">Live model</span>
+          </div>
+          <div class="form-grid">
+            <label>
+              <span id="labelInitial">Стартовое вложение</span>
+              <input id="initialInvestment" type="number" min="0" step="100" value="10000" />
+            </label>
+            <label>
+              <span id="labelAnnualReturn">Годовая доходность, %</span>
+              <input id="annualReturn" type="number" min="0" step="0.1" value="25" />
+            </label>
+            <label>
+              <span id="labelCycleLength">Длина цикла, месяцев</span>
+              <input id="cycleLength" type="number" min="1" step="1" value="12" />
+            </label>
+            <label>
+              <span id="labelProjection">Горизонт прогноза, месяцев</span>
+              <input id="projectionMonths" type="number" min="1" step="1" value="36" />
+            </label>
+            <label>
+              <span id="labelReinvest">Реинвест, % от месячной выплаты</span>
+              <input id="reinvestPercent" type="number" min="0" max="100" step="1" value="100" />
+            </label>
+            <label>
+              <span id="labelMonthlyAdd">Регулярное доп. вложение в месяц</span>
+              <input id="monthlyAdditional" type="number" min="0" step="50" value="0" />
+            </label>
+          </div>
+          <div class="button-row">
+            <button id="calculateBtn" class="primary-btn">Рассчитать</button>
+            <button id="resetBtn" class="secondary-btn">Сбросить</button>
+          </div>
+        </div>
+
+        <div class="card summary-card">
+          <div class="card-header">
+            <h2 id="summaryTitle">Итоги</h2>
+            <span class="badge badge-soft" id="badgeAuto">Auto-updated</span>
+          </div>
+          <div class="summary-grid">
+            <div class="metric">
+              <span id="metricTotalPayoutLabel">Суммарные выплаты</span>
+              <strong id="metricTotalPayout">$0</strong>
+            </div>
+            <div class="metric">
+              <span id="metricTotalReinvestedLabel">Реинвестировано</span>
+              <strong id="metricTotalReinvested">$0</strong>
+            </div>
+            <div class="metric">
+              <span id="metricManualAddedLabel">Доп. вложения</span>
+              <strong id="metricManualAdded">$0</strong>
+            </div>
+            <div class="metric">
+              <span id="metricActiveCapitalLabel">Активный капитал в конце</span>
+              <strong id="metricActiveCapital">$0</strong>
+            </div>
+          </div>
+          <div class="mini-note" id="summaryNote">Модель считает каскад: каждый запуск выплачивается равными частями весь цикл, а заданная доля выплаты запускается заново.</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2 id="manualTitle">Ручные дополнительные вложения по месяцам</h2>
+          <span class="badge" id="manualHint">Editable</span>
+        </div>
+        <div class="table-wrap compact-table">
+          <table>
+            <thead>
+              <tr>
+                <th id="thMonth">Месяц</th>
+                <th id="thExtra">Доп. вложение</th>
+              </tr>
+            </thead>
+            <tbody id="manualInvestmentBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2 id="chartTitle">График активного капитала</h2>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="capitalChart" width="1200" height="360"></canvas>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2 id="tableTitle">Помесячная модель</h2>
+          <button id="downloadCsvBtn" class="chip chip-button">CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table id="modelTable">
+            <thead>
+              <tr>
+                <th id="colMonth">Месяц</th>
+                <th id="colOpening">Активный капитал на старт</th>
+                <th id="colPayout">Выплата за месяц</th>
+                <th id="colReinvested">Реинвест</th>
+                <th id="colCashout">Вывод кэша</th>
+                <th id="colRegular">Регулярное доп. вложение</th>
+                <th id="colManual">Ручное доп. вложение</th>
+                <th id="colNewCycles">Новые запуски месяца</th>
+                <th id="colEnding">Активный капитал на конец</th>
+              </tr>
+            </thead>
+            <tbody id="modelBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
