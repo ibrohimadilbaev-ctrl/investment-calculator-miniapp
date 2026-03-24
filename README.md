@@ -37,4 +37,3 @@ Optional:
 ## Security
 The bot token should be kept in environment variables if you later add a backend.
 This static version does not need the token to work.
-update
